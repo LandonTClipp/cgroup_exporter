@@ -176,7 +176,7 @@ func (e *Exporter) getMetricsv2(name string, pids []int, opts cgroup2.InitOpts) 
 		metric.err = true
 		return metric, err
 	}
-	pagetables, err := getStatv2("pgtables", memoryStatPath)
+	pagetables, err := getStatv2("pagetables", memoryStatPath)
 	if err != nil {
 		level.Error(e.logger).Log("msg", "Unable to get page tables memory", "path", name, "err", err)
 		metric.err = true
