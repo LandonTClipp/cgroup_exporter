@@ -62,14 +62,16 @@ type Exporter struct {
 	memoryTotal     *prometheus.Desc
 	memoryFailCount *prometheus.Desc
 
-	memoryKernel            *prometheus.Desc
-	memoryKernelStack       *prometheus.Desc
-	memoryFileMapped        *prometheus.Desc
-	memoryActiveAnon        *prometheus.Desc
-	memorySlabReclaimable   *prometheus.Desc
-	memorySlabUnreclaimable *prometheus.Desc
-	memorySlab              *prometheus.Desc
-	memoryPgFault           *prometheus.Desc
+	memoryKernel              *prometheus.Desc
+	memoryKernelStack         *prometheus.Desc
+	memoryFileMapped          *prometheus.Desc
+	memoryActiveAnon          *prometheus.Desc
+	memorySlabReclaimable     *prometheus.Desc
+	memorySlabUnreclaimable   *prometheus.Desc
+	memorySlab                *prometheus.Desc
+	memoryPgFault             *prometheus.Desc
+	memoryPageTables          *prometheus.Desc
+	memorySecondaryPageTables *prometheus.Desc
 
 	memswUsed      *prometheus.Desc
 	memswTotal     *prometheus.Desc
@@ -102,6 +104,8 @@ type CgroupMetric struct {
 	memorySlabUnreclaimable float64
 	memorySlab              float64
 	memoryPgFault           float64
+	memoryPageTables        float64
+	memorySecPageTables     float64
 
 	memswUsed      float64
 	memswTotal     float64
@@ -166,6 +170,10 @@ func NewExporter(paths []string, logger log.Logger, cgroupv2 bool) *Exporter {
 			"Memory used by slab in bytes", []string{"cgroup"}, nil),
 		memoryPgFault: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "page_faults_total"),
 			"Number of page faults", []string{"cgroup"}, nil),
+		memoryPageTables: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "page_tables_bytes"),
+			"Memory used by page tables in bytes", []string{"cgroup"}, nil),
+		memorySecondaryPageTables: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "secondary_page_tables_bytes"),
+			"Memory used by secondary page tables in bytes", []string{"cgroup"}, nil),
 
 		memswUsed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memsw", "used_bytes"),
 			"Swap used in bytes", []string{"cgroup"}, nil),
@@ -203,6 +211,8 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.memorySlabUnreclaimable
 	ch <- e.memorySlab
 	ch <- e.memoryPgFault
+	ch <- e.memoryPageTables
+	ch <- e.memorySecondaryPageTables
 	ch <- e.memswUsed
 	ch <- e.memswTotal
 	ch <- e.memswFailCount
@@ -242,6 +252,8 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(e.memorySlabUnreclaimable, prometheus.GaugeValue, m.memorySlabUnreclaimable, m.name)
 		ch <- prometheus.MustNewConstMetric(e.memorySlab, prometheus.GaugeValue, m.memorySlab, m.name)
 		ch <- prometheus.MustNewConstMetric(e.memoryPgFault, prometheus.GaugeValue, m.memoryPgFault, m.name)
+		ch <- prometheus.MustNewConstMetric(e.memoryPageTables, prometheus.GaugeValue, m.memoryPageTables, m.name)
+		ch <- prometheus.MustNewConstMetric(e.memorySecondaryPageTables, prometheus.GaugeValue, m.memorySecPageTables, m.name)
 		ch <- prometheus.MustNewConstMetric(e.memswUsed, prometheus.GaugeValue, m.memswUsed, m.name)
 		ch <- prometheus.MustNewConstMetric(e.memswTotal, prometheus.GaugeValue, m.memswTotal, m.name)
 

@@ -176,6 +176,18 @@ func (e *Exporter) getMetricsv2(name string, pids []int, opts cgroup2.InitOpts) 
 		metric.err = true
 		return metric, err
 	}
+	pagetables, err := getStatv2("pgtables", memoryStatPath)
+	if err != nil {
+		level.Error(e.logger).Log("msg", "Unable to get page tables memory", "path", name, "err", err)
+		metric.err = true
+		return metric, err
+	}
+	secPageTables, err := getStatv2("sec_pagetables", memoryStatPath)
+	if err != nil {
+		level.Error(e.logger).Log("msg", "Unable to get secondary page tables memory", "path", name, "err", err)
+		metric.err = true
+		return metric, err
+	}
 
 	if stats.Memory != nil {
 		metric.memoryRSS = float64(stats.Memory.Anon) + swapcached + float64(stats.Memory.File)
@@ -191,6 +203,8 @@ func (e *Exporter) getMetricsv2(name string, pids []int, opts cgroup2.InitOpts) 
 		metric.memorySlabUnreclaimable = float64(stats.Memory.SlabUnreclaimable)
 		metric.memorySlab = float64(stats.Memory.Slab)
 		metric.memoryPgFault = float64(stats.Memory.Pgfault)
+		metric.memoryPageTables = pagetables
+		metric.memorySecPageTables = secPageTables
 
 		metric.memswUsed = float64(stats.Memory.SwapUsage)
 		metric.memswTotal = float64(stats.Memory.SwapLimit)
