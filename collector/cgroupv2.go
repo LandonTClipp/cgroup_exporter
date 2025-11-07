@@ -170,12 +170,19 @@ func (e *Exporter) getMetricsv2(name string, pids []int, opts cgroup2.InitOpts) 
 		metric.err = true
 		return metric, err
 	}
+	kernel, err := getStatv2("kernel", memoryStatPath)
+	if err != nil {
+		level.Error(e.logger).Log("msg", "Unable to get kernel memory", "path", name, "err", err)
+		metric.err = true
+		return metric, err
+	}
+
 	if stats.Memory != nil {
 		metric.memoryRSS = float64(stats.Memory.Anon) + swapcached + float64(stats.Memory.File)
 		metric.memoryUsed = float64(stats.Memory.Usage)
 		metric.memoryTotal = float64(stats.Memory.UsageLimit)
 		metric.memoryCache = float64(stats.Memory.File)
-		metric.memoryKernel = float64(stats.Memory.KernelStack)
+		metric.memoryKernel = kernel
 		metric.memoryKernelStack = float64(stats.Memory.KernelStack)
 
 		metric.memoryFileMapped = float64(stats.Memory.FileMapped)
