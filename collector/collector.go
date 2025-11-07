@@ -61,37 +61,59 @@ type Exporter struct {
 	memoryUsed      *prometheus.Desc
 	memoryTotal     *prometheus.Desc
 	memoryFailCount *prometheus.Desc
-	memswUsed       *prometheus.Desc
-	memswTotal      *prometheus.Desc
-	memswFailCount  *prometheus.Desc
-	info            *prometheus.Desc
-	processExec     *prometheus.Desc
-	logger          log.Logger
-	cgroupv2        bool
+
+	memoryKernel            *prometheus.Desc
+	memoryKernelStack       *prometheus.Desc
+	memoryFileMapped        *prometheus.Desc
+	memoryActiveAnon        *prometheus.Desc
+	memorySlabReclaimable   *prometheus.Desc
+	memorySlabUnreclaimable *prometheus.Desc
+	memorySlab              *prometheus.Desc
+	memoryPgFault           *prometheus.Desc
+
+	memswUsed      *prometheus.Desc
+	memswTotal     *prometheus.Desc
+	memswFailCount *prometheus.Desc
+	info           *prometheus.Desc
+	processExec    *prometheus.Desc
+	logger         log.Logger
+	cgroupv2       bool
 }
 
 type CgroupMetric struct {
-	name            string
-	cpuUser         float64
-	cpuSystem       float64
-	cpuTotal        float64
-	cpus            int
-	cpu_list        string
+	name      string
+	cpuUser   float64
+	cpuSystem float64
+	cpuTotal  float64
+	cpus      int
+	cpu_list  string
+
 	memoryRSS       float64
 	memoryCache     float64
 	memoryUsed      float64
 	memoryTotal     float64
 	memoryFailCount float64
-	memswUsed       float64
-	memswTotal      float64
-	memswFailCount  float64
-	userslice       bool
-	job             bool
-	uid             string
-	username        string
-	jobid           string
-	processExec     map[string]float64
-	err             bool
+
+	memoryKernel            float64
+	memoryKernelStack       float64
+	memoryFileMapped        float64
+	memoryActiveAnon        float64
+	memorySlabReclaimable   float64
+	memorySlabUnreclaimable float64
+	memorySlab              float64
+	memoryPgFault           float64
+
+	memswUsed      float64
+	memswTotal     float64
+	memswFailCount float64
+
+	userslice   bool
+	job         bool
+	uid         string
+	username    string
+	jobid       string
+	processExec map[string]float64
+	err         bool
 }
 
 func NewCgroupCollector(cgroupV2 bool, paths []string, logger log.Logger) Collector {
@@ -127,6 +149,24 @@ func NewExporter(paths []string, logger log.Logger, cgroupv2 bool) *Exporter {
 			"Memory total given to cgroup in bytes", []string{"cgroup"}, nil),
 		memoryFailCount: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "fail_count"),
 			"Memory fail count", []string{"cgroup"}, nil),
+
+		memoryKernel: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "kernel_bytes"),
+			"Memory used by kernel in bytes", []string{"cgroup"}, nil),
+		memoryKernelStack: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "kernel_stack_bytes"),
+			"Memory used by kernel stack in bytes", []string{"cgroup"}, nil),
+		memoryFileMapped: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "file_mapped_bytes"),
+			"Memory used by file mapped in bytes", []string{"cgroup"}, nil),
+		memoryActiveAnon: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "active_anon_bytes"),
+			"Memory used by active anonymous in bytes", []string{"cgroup"}, nil),
+		memorySlabReclaimable: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "slab_reclaimable_bytes"),
+			"Memory used by slab reclaimable in bytes", []string{"cgroup"}, nil),
+		memorySlabUnreclaimable: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "slab_unreclaimable_bytes"),
+			"Memory used by slab unreclaimable in bytes", []string{"cgroup"}, nil),
+		memorySlab: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "slab_bytes"),
+			"Memory used by slab in bytes", []string{"cgroup"}, nil),
+		memoryPgFault: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memory", "page_faults_total"),
+			"Number of page faults", []string{"cgroup"}, nil),
+
 		memswUsed: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memsw", "used_bytes"),
 			"Swap used in bytes", []string{"cgroup"}, nil),
 		memswTotal: prometheus.NewDesc(prometheus.BuildFQName(Namespace, "memsw", "total_bytes"),
@@ -155,6 +195,14 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.memoryUsed
 	ch <- e.memoryTotal
 	ch <- e.memoryFailCount
+	ch <- e.memoryKernel
+	ch <- e.memoryKernelStack
+	ch <- e.memoryFileMapped
+	ch <- e.memoryActiveAnon
+	ch <- e.memorySlabReclaimable
+	ch <- e.memorySlabUnreclaimable
+	ch <- e.memorySlab
+	ch <- e.memoryPgFault
 	ch <- e.memswUsed
 	ch <- e.memswTotal
 	ch <- e.memswFailCount
@@ -186,8 +234,17 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(e.memoryTotal, prometheus.GaugeValue, m.memoryTotal, m.name)
 		ch <- prometheus.MustNewConstMetric(e.memoryCache, prometheus.GaugeValue, m.memoryCache, m.name)
 		ch <- prometheus.MustNewConstMetric(e.memoryFailCount, prometheus.GaugeValue, m.memoryFailCount, m.name)
+		ch <- prometheus.MustNewConstMetric(e.memoryKernel, prometheus.GaugeValue, m.memoryKernel, m.name)
+		ch <- prometheus.MustNewConstMetric(e.memoryKernelStack, prometheus.GaugeValue, m.memoryKernelStack, m.name)
+		ch <- prometheus.MustNewConstMetric(e.memoryFileMapped, prometheus.GaugeValue, m.memoryFileMapped, m.name)
+		ch <- prometheus.MustNewConstMetric(e.memoryActiveAnon, prometheus.GaugeValue, m.memoryActiveAnon, m.name)
+		ch <- prometheus.MustNewConstMetric(e.memorySlabReclaimable, prometheus.GaugeValue, m.memorySlabReclaimable, m.name)
+		ch <- prometheus.MustNewConstMetric(e.memorySlabUnreclaimable, prometheus.GaugeValue, m.memorySlabUnreclaimable, m.name)
+		ch <- prometheus.MustNewConstMetric(e.memorySlab, prometheus.GaugeValue, m.memorySlab, m.name)
+		ch <- prometheus.MustNewConstMetric(e.memoryPgFault, prometheus.GaugeValue, m.memoryPgFault, m.name)
 		ch <- prometheus.MustNewConstMetric(e.memswUsed, prometheus.GaugeValue, m.memswUsed, m.name)
 		ch <- prometheus.MustNewConstMetric(e.memswTotal, prometheus.GaugeValue, m.memswTotal, m.name)
+
 		// These metrics currently have no cgroup v2 information
 		if !e.cgroupv2 {
 			ch <- prometheus.MustNewConstMetric(e.memswFailCount, prometheus.GaugeValue, m.memswFailCount, m.name)

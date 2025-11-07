@@ -19,6 +19,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/LandonTClipp/cgroup_exporter/collector"
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/containerd/cgroups/v3"
 	"github.com/go-kit/log"
@@ -29,7 +30,6 @@ import (
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
 	"github.com/prometheus/common/version"
-	"github.com/treydock/cgroup_exporter/collector"
 )
 
 var (

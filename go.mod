@@ -1,4 +1,4 @@
-module github.com/treydock/cgroup_exporter
+module github.com/LandonTClipp/cgroup_exporter
 
 go 1.22
 

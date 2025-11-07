@@ -175,8 +175,19 @@ func (e *Exporter) getMetricsv2(name string, pids []int, opts cgroup2.InitOpts) 
 		metric.memoryUsed = float64(stats.Memory.Usage)
 		metric.memoryTotal = float64(stats.Memory.UsageLimit)
 		metric.memoryCache = float64(stats.Memory.File)
+		metric.memoryKernel = float64(stats.Memory.KernelStack)
+		metric.memoryKernelStack = float64(stats.Memory.KernelStack)
+
+		metric.memoryFileMapped = float64(stats.Memory.FileMapped)
+		metric.memoryActiveAnon = float64(stats.Memory.ActiveAnon)
+		metric.memorySlabReclaimable = float64(stats.Memory.SlabReclaimable)
+		metric.memorySlabUnreclaimable = float64(stats.Memory.SlabUnreclaimable)
+		metric.memorySlab = float64(stats.Memory.Slab)
+		metric.memoryPgFault = float64(stats.Memory.Pgfault)
+
 		metric.memswUsed = float64(stats.Memory.SwapUsage)
 		metric.memswTotal = float64(stats.Memory.SwapLimit)
+
 		if stats.MemoryEvents != nil {
 			metric.memoryFailCount = float64(stats.MemoryEvents.Oom)
 		}
